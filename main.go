@@ -81,10 +81,10 @@ func generate(ctx context.Context, req *plugin.GenerateRequest) (*plugin.Generat
 		"ToLower": strings.ToLower,
 	}
 
-    // Allow custom function map plugins
+	// Allow custom function map plugins
 	if options.FuncPlugins != nil {
 		for _, pluginPath := range options.FuncPlugins {
-			extraFuncs, err := loadFuncMapFromPlugin(pluginPath)
+			extraFuncs, err := loadFuncMapFromPlugin(pluginPath, pluginOptions)
 			if err != nil {
 				log.Fatalf("loading FuncMap plugin: %v", err)
 			}
@@ -146,27 +146,29 @@ func generate(ctx context.Context, req *plugin.GenerateRequest) (*plugin.Generat
 }
 
 
-func loadFuncMapFromPlugin(path string) (template.FuncMap, error) {
-    p, err := goplugin.Open(path)
-    if err != nil {
-        return nil, fmt.Errorf("opening func plugin: %w", err)
-    }
+func loadFuncMapFromPlugin(path string, pluginOptions map[string]any) (template.FuncMap, error) {
+	p, err := goplugin.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening func plugin: %w", err)
+	}
 
-    sym, err := p.Lookup("FuncMap")
-    if err != nil {
-        return nil, fmt.Errorf("looking up FuncMap symbol: %w", err)
-    }
+	sym, err := p.Lookup("FuncMap")
+	if err != nil {
+		return nil, fmt.Errorf("looking up FuncMap symbol: %w", err)
+	}
 
-    switch v := sym.(type) {
-    case *template.FuncMap:
-        return *v, nil
-    case template.FuncMap:
-        return v, nil
-    case *map[string]interface{}:
-        return template.FuncMap(*v), nil
-    case map[string]interface{}:
-        return template.FuncMap(v), nil
-    default:
-        return nil, fmt.Errorf("FuncMap has unexpected type %T", sym)
-    }
+	switch v := sym.(type) {
+	case func (map[string]any) (template.FuncMap, error):
+		return v(pluginOptions)
+	case *template.FuncMap:
+		return *v, nil
+	case template.FuncMap:
+		return v, nil
+	case *map[string]interface{}:
+		return template.FuncMap(*v), nil
+	case map[string]interface{}:
+		return template.FuncMap(v), nil
+	default:
+		return nil, fmt.Errorf("FuncMap has unexpected type %T", sym)
+	}
 }
