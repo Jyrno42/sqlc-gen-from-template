@@ -54,6 +54,8 @@ sql:
         filename: "Queries.scala"
         # optional formatter command to format generated code
         formatter_cmd: ".devbox/nix/profile/default/bin/scalafmt --stdin"
+        # optional function plugin to provide custom template functions
+        func_plugin: "plugin_examples/hello_world.so"
 ```
 
 `schema.sql`
