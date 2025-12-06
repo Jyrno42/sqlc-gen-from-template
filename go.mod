@@ -1,4 +1,4 @@
-module github.com/fdietze/sqlc-gen-from-template
+module github.com/jyrno42/sqlc-gen-from-template
 
 go 1.22.5
 
